@@ -37,6 +37,8 @@ import sys
 import traceback
 
 import time 
+from utils.log import *
+
 
 def readDataMS(root,scs,tg,Cs_end,Cu_start,fn='fea',postfix=''): 
     '''
@@ -607,7 +609,7 @@ scs=['Product.csv','RealWorld.csv','Art.csv']
 tg='Clipart.csv'
 domain_num=4
 # root=osp.join('Office-31_Alex','Data_office31')
-root='OfficeHome_dk'
+root='data/OfficeHome_dk'
 dataSet='OfficeHomeDK'
 domain=['Product.csv','RealWorld.csv','Art.csv','Clipart.csv']
 Cs_end,Cu_start=45,45
@@ -620,7 +622,8 @@ Gamma_tu=[i/100 for i in range(30,40,10)]
 
 # Train(dataSet,'Clipart.csv',['Product.csv','RealWorld.csv','Art.csv'],root,Cs_end,Cu_start,conf=-0.5)
 make_print_to_file(filename='{}_Mlti_2{}_v1_2'.format(dataSet,'every'),path=dataSet+'logs')
-
+initLoggingConfig(level="detail",logFileName='{}_Mlti_2{}_v1_2'.format(dataSet,'every'),logPath="logs")
+input()
 for tg in domain:
     if tg!='Clipart.csv':
         continue
