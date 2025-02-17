@@ -1,4 +1,4 @@
-import globalvar as gl
+import utils.globalvar as gl
 import os 
 import os.path as osp
 import datetime
