@@ -595,7 +595,7 @@ def Train(dataset,tg,scs,root,Cs_end,Cu_start,epoch=10,eta=0.002,gamma_tk=0.4,ga
             return max(accs)
 
     print('source:{}target:{}'.format(scs,tg))
-    print('eta:{}\tgamma_tk:{}\tgamma_tu:{}\tgamma_s:{}\tu_conf:{}\tconf:{}'.format(eta,gamma_tk,gamma_tu,gamma_s,u_conf,conf))
+    print('eta:{}\tgamma_tk:{}\tgamma_tu:{}\tgamma_s:{}\tconf:{}'.format(eta,gamma_tk,gamma_tu,gamma_s,conf))
     print('Cs_end:{}\tCu_start:{}'.format(Cs_end,Cu_start))
     for i in range(len(accs)):
         print("Iterations:",i,'\tacc:{}\tacc_known:{}\tacc_unknown:{}\tHOS:{}'.format(accs[i],acc_knowns[i],acc_unknowns[i],HOSs[i]))
@@ -614,25 +614,27 @@ domain=['dslr.csv','webcam.csv','amazon.csv']
 # dataSet='resnet50imageClf'
 domain_num=3
 # root=osp.join('Office-31_Alex','Data_office31')
-root='resnet50Data'
+root='data//resnet50Data'
 dataSet='Office31'
 
 para=[i/1000 for i in range(1,10,1)]#eta
 eta_para=[0.001]
-Gamma_s=[i/100 for i in range(30,60,10)]#Gamma_s
-Gamma_tk=[i/100 for i in range(10,60,10)]
-Gamma_tu=[i/100 for i in range(30,70,10)]
+Gamma_s=[i/100 for i in range(30,50,10)]#Gamma_s
+Gamma_tk=[i/100 for i in range(10,40,10)]
+Gamma_tu=[i/100 for i in range(20,50,10)]
 Cs_end,Cu_start=10,21
 
-scs=['dslr.csv','webcam.csv']
-tg='amazon.csv'
+scs=['dslr.csv','amazon.csv']
+tg='webcam.csv'
 e=0.001	
-tk=0.1	
-tu=0.4	
-gs=0.5
+tk=0.2	
+tu=0.3	
+gs=0.3
 
-make_print_to_file(filename='{}_Mlti_2{}_v1_2'.format(dataSet,'every'),path=dataSet+'logs')
+make_print_to_file(filename='{}_Mlti_2{}_v1_2'.format(dataSet,'W'),path=dataSet+'logs')
+# maxAcc=Train(dataSet,tg,scs,root,Cs_end,Cu_start,eta=e,gamma_tk=tk,gamma_tu=tu,gamma_s=gs,pro=True)
 # Train(dataSet,tg,scs,root,Cs_end,Cu_start,eta=e,gamma_tk=tk,gamma_tu=tu,gamma_s=gs,pro=False)
+# sys.exit()
 for tg in domain:
     t=domain.copy()
     t.remove(tg)

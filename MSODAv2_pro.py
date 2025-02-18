@@ -524,27 +524,29 @@ def make_print_to_file(filename="Default.log",path='./'):
     print(fileName.center(60,'*'))
     
     
-# scs=['dslr.csv','webcam.csv']
+scs=['dslr.csv','amazon.csv']
 # domain=['dslr.csv','webcam.csv','amazon.csv']
-domain=['imageclef-p.csv','imageclef-c.csv','imageclef-i.csv']
-# tg='amazon.csv'
+# domain=['imageclef-p.csv','imageclef-c.csv','imageclef-i.csv']
+tg='webcam.csv'
 # domain_num=3
 # root=osp.join('Office-31_Alex','Data_office31')
-root='resnet50imageClf'
-dataSet='resnet50imageClf'
+root='resnet50Data'
+dataSet='Office31'
 
-Cs_end,Cu_start=5,6
-eta=0.002
+Cs_end,Cu_start=10,21
+eta=0.001
 gamma_tk=0.2
-gamma_tu=0.7
-# gamma_s=0.4
+gamma_tu=0.3
+gamma_s=0.3
 conf=0
 u_conf=0
+make_print_to_file(filename='{}_Mlti_2{}_v1_2'.format(dataSet,tg),path=dataSet+'logs')
 
-def Train(dataset,tg,scs,root,Cs_end,Cu_start,epoch=10,eta=0.002,gamma_tk=0.4,gamma_tu=0.5,gamma_s=0.57,conf=0,pro=True):
+def Train(tg,scs,root,Cs_end,Cu_start,epoch=10,eta=0.001,gamma_tk=0.2,gamma_tu=0.3,gamma_s=0.3,conf=0,pro=True):
     print("Progressive: ",pro)
-    make_print_to_file(filename='{}_Mlti_2{}_v1_2'.format(dataSet,tg),path=dataset+'logs')
     print("DataSet:{}".format(root),"\nTarget Domain:{}".format(tg))
+    print('eta:{}\tgamma_tk:{}\tgamma_tu:{}\tgamma_s:{}\tconf:{}'.format(eta,gamma_tk,gamma_tu,gamma_s,conf))
+    print('Cs_end:{}\tCu_start:{}'.format(Cs_end,Cu_start))
 
     Xs,ys,Xt,yt,l,Cs,Cu=roadDataMSbyCSV(root,scs,tg,Cs_end,Cu_start)
     Xt_new,Yt_new,Yt_pseudo,Yt_conf=pseudo_fuc_ms(Xs,ys,Xt,yt,Cs,Cu,conf=conf)
@@ -612,13 +614,13 @@ def Train(dataset,tg,scs,root,Cs_end,Cu_start,epoch=10,eta=0.002,gamma_tk=0.4,ga
     return max(accs),gamma_s
 # p=0.002
 # p=0.002
-for tg in domain:
-    t=domain.copy()
-    t.remove(tg)
-    scs=t
-    print(tg,scs)
-    Train(dataSet,tg,scs,root,Cs_end,Cu_start,pro=True)
-# Train(tg,scs,Cs_end,Cu_start)
+# for tg in domain:
+#     t=domain.copy()
+#     t.remove(tg)
+#     scs=t
+#     print(tg,scs)
+#     Train(dataSet,tg,scs,root,Cs_end,Cu_start,pro=True)
+Train(tg,scs,root,Cs_end,Cu_start)
 # para=[i/1000 for i in range(1,10,1)]#eta
 # para=[0.01,0.001,0.0001]
 # # Gamma_s=[i/100 for i in range(30,62,3)]#Gamma_s

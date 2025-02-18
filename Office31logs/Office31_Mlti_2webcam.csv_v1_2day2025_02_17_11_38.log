@@ -1,0 +1,8 @@
+*****Office31_Mlti_2webcam.csv_v1_2day2025_02_17_11_38******
+*****Office31_Mlti_2webcam.csv_v1_2day2025_02_17_11_38******
+Progressive:  True
+DataSet:resnet50Data 
+Target Domain:webcam.csv
+eta:0.001	gamma_tk:0.2	gamma_tu:0.3	gamma_s:0.3	conf:0
+Cs_end:10	Cu_start:21
+source 0 is dslr.csv

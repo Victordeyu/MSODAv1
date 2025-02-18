@@ -611,60 +611,76 @@ def Train(dataset,tg,scs,root,Cs_end,Cu_start,epoch=10,eta=0.002,gamma_tk=0.4,ga
     return max(accs)
 
 
-scs=['Product.csv','RealWorld.csv','Art.csv']
-tg='Clipart.csv'
-domain_num=4
+# scs=['Product.csv','RealWorld.csv','Art.csv']
+# tg='Clipart.csv'
 # root=osp.join('Office-31_Alex','Data_office31')
-root='data/OfficeHome_dk'
-dataSet='OfficeHomeDK'
-domain=['Product.csv','RealWorld.csv','Art.csv','Clipart.csv']
-Cs_end,Cu_start=45,45
+## 以下是officeHome
+# root='data/OfficeHome_dk'
+# dataSet='OfficeHomeDK'
+# domain=['Product.csv','RealWorld.csv','Art.csv','Clipart.csv']
+# Cs_end,Cu_start=45,45
+
+## 以下是office31
+root='data/resnet50Data'
+dataSet='Office31'
+domain=['dslr.csv','amazon.csv','webcam.csv']
+Cs_end,Cu_start=10,20
 
 # para=[i/1000 for i in range(1,10,1)]#eta
-eta_para=[0.001,0.01]
+eta_para=[0.001]
 Gamma_s=[i/100 for i in range(30,50,10)]#Gamma_s
-Gamma_tk=[i/100 for i in range(10,20,10)]
-Gamma_tu=[i/100 for i in range(30,40,10)]
+Gamma_tk=[i/100 for i in range(10,40,10)]
+Gamma_tu=[i/100 for i in range(10,40,10)]
+
+all_start=time.time()
 
 # Train(dataSet,'RealWorld.csv',['Product.csv','Clipart.csv','Art.csv'],root,Cs_end,Cu_start,conf=0.0)
-make_print_to_file(filename='{}_Mlti_2{}_v1_2'.format(dataSet,'Pro'),path=osp.join('data',dataSet+'logs'))
-Train(dataSet,'Product.csv',['Art.csv','Clipart.csv','RealWorld.csv'],root,Cs_end,Cu_start,eta=0.001,gamma_tk=0.1,gamma_tu=0.3,gamma_s=0.3,pro=True)
+make_print_to_file(filename='{}_Mlti_2{}_v1_2_newSet'.format(dataSet,'Amazon'),path=osp.join('data',dataSet+'logs'))
+# Train(dataSet,'Clipart.csv',['Art.csv','Product.csv','RealWorld.csv'],root,Cs_end,Cu_start,eta=0.001,gamma_tk=1,gamma_tu=3,gamma_s=1,pro=True)
+# Train(dataSet,'dslr.csv',['amazon.csv','webcam.csv'],root,Cs_end,Cu_start,eta=0.001,gamma_tk=0.1,gamma_tu=0.3,gamma_s=0.3,pro=True)
+# Train(dataSet,'webcam.csv',['amazon.csv','dslr.csv'],root,Cs_end,Cu_start,eta=0.001,gamma_tk=0.1,gamma_tu=0.3,gamma_s=0.3,pro=True)
+# Train(dataSet,'amazon.csv',['dslr.csv','webcam.csv'],root,Cs_end,Cu_start,eta=0.001,gamma_tk=0.1,gamma_tu=0.3,gamma_s=0.3,pro=True)
+
+interval=time.strftime("%H:%M:%S", time.gmtime(time.time()-all_start))
+print("All Set cost time:",interval)
+
 # initLoggingConfig(level="detail",logFileName='{}_Mlti_2{}_v1_2'.format(dataSet,'every'),logPath="logs")
 # input()
-# for tg in domain:
-#     if tg!='Clipart.csv':
-#         continue
-#     start=time.time()
-#     t=domain.copy()
-#     t.remove(tg)
-#     scs=t
-#     print('-------------Domain:{}-------------------------'.format(tg))
-#     print(tg,scs)
-#     maxA=[]
-#     bestAcc=0,0,0,0,0
+# sys.exit()
+for tg in domain:
+    if tg!='amazon.csv':
+        continue
+    start=time.time()
+    t=domain.copy()
+    t.remove(tg)
+    scs=t
+    print('-------------Domain:{}-------------------------'.format(tg))
+    print(tg,scs)
+    maxA=[]
+    bestAcc=0,0,0,0,0
     
-#     for e in eta_para:
-#         for gs in Gamma_s:
-#             for tk in Gamma_tk:
-#                 for tu in Gamma_tu:
-#                     try:
-#                         maxAcc=Train(dataSet,tg,scs,root,Cs_end,Cu_start,eta=e,gamma_tk=tk,gamma_tu=tu,gamma_s=gs,pro=True)
-#                         maxA.append((maxAcc,e,gs,tk,tu))
-#                     except Exception as e:
-#                         print("Exception!!!!:",e)
-#                         traceback.print_exc()
-#                 for Acc,e,gs,tk,tu in maxA:
-#                     if Acc>bestAcc[0]:
-#                         bestAcc=Acc,e,gs,tk,tu
-#                     print("----CurrentBest:---- \nEta:{}\t Gamma_s:{}\tGamma_tk:{}\tGamma_tu:{}\tMax_Acc:{} ".format(e,gs,tk,tu,Acc))
-#                 interval=time.strftime("%H:%M:%S", time.gmtime(time.time()-start))
-#                 print("Current cost time:",interval)
-#     for Acc,e,gs,tk,tu in maxA:
-#         if Acc>bestAcc[0]:
-#             bestAcc=Acc,e,gs,tk,tu
-#         print("Eta:{}\t Gamma_s:{}\tGamma_tk:{}\tGamma_tu:{}Max_Acc:{}".format(e,gs,tk,tu,Acc))
+    for e in eta_para:
+        for gs in Gamma_s:
+            for tk in Gamma_tk:
+                for tu in Gamma_tu:
+                    try:
+                        maxAcc=Train(dataSet,tg,scs,root,Cs_end,Cu_start,eta=e,gamma_tk=tk,gamma_tu=tu,gamma_s=gs,pro=True)
+                        maxA.append((maxAcc,e,gs,tk,tu))
+                    except Exception as e:
+                        print("Exception!!!!:",e)
+                        traceback.print_exc()
+                for Acc,e,gs,tk,tu in maxA:
+                    if Acc>bestAcc[0]:
+                        bestAcc=Acc,e,gs,tk,tu
+                    print("----CurrentBest:---- \nEta:{}\t Gamma_s:{}\tGamma_tk:{}\tGamma_tu:{}\tMax_Acc:{} ".format(e,gs,tk,tu,Acc))
+                interval=time.strftime("%H:%M:%S", time.gmtime(time.time()-start))
+                print("Current cost time:",interval)
+    for Acc,e,gs,tk,tu in maxA:
+        if Acc>bestAcc[0]:
+            bestAcc=Acc,e,gs,tk,tu
+        print("Eta:{}\t Gamma_s:{}\tGamma_tk:{}\tGamma_tu:{}Max_Acc:{}".format(e,gs,tk,tu,Acc))
     
-#     interval=time.strftime("%H:%M:%S", time.gmtime(time.time()-start))
-#     print("Current cost time:",interval)
-#     print("Max Acc is:",bestAcc)
+    interval=time.strftime("%H:%M:%S", time.gmtime(time.time()-start))
+    print("Current cost time:",interval)
+    print("Max Acc is:",bestAcc)
     
