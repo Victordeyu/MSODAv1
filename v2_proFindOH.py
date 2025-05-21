@@ -527,16 +527,20 @@ def make_print_to_file(filename="Default.log",path='./'):
     
 
 
-def Train(dataset,tg,scs,root,Cs_end,Cu_start,epoch=10,eta=0.002,gamma_tk=0.4,gamma_tu=0.5,gamma_s=0.57,conf=0,pro=True,early_epoch=11,early_acc=0.8):
+def Train(dataset,tg,scs,root,Cs_end,Cu_start,epoch=10,eta=0.002,gamma_tk=0.4,gamma_tu=0.5,gamma_s=0.57,conf=0,pro=True,early_epoch=11,early_acc=0.8,d=None):
     print('source:{}target:{}'.format(scs,tg))
     print('eta:{}\tgamma_tk:{}\tgamma_tu:{}\tgamma_s:{}\tconf:{}'.format(eta,gamma_tk,gamma_tu,gamma_s,conf))
     print('Cs_end:{}\tCu_start:{}'.format(Cs_end,Cu_start))
+    print('PCA dim :',d)
     start=time.time()
     print("Progressive: ",pro)
     # make_print_to_file(filename='{}_Mlti_2{}_v1_2'.format(dataSet,tg),path=dataset+'logs')
     print("DataSet:{}".format(root),"\nTarget Domain:{}".format(tg))
 
     Xs,ys,Xt,yt,l,Cs,Cu=roadDataMSbyCSV(root,scs,tg,Cs_end,Cu_start)
+    # print("ys:",ys)
+    # print("yt:",yt)
+    # input()
     Xt_new,Yt_new,Yt_pseudo,Yt_conf=pseudo_fuc_ms(Xs,ys,Xt,yt,Cs,Cu,conf=conf)
 
     unique,count=np.unique(Yt_pseudo,return_counts=True)
@@ -550,11 +554,11 @@ def Train(dataset,tg,scs,root,Cs_end,Cu_start,epoch=10,eta=0.002,gamma_tk=0.4,ga
     ys_all=np.hstack(ys)
 
     np.random.seed(0)  # 使得PCA算法稳定
-    pca = PCA(svd_solver="full").fit(np.vstack((Xs_all,Xt_new)))
+    pca = PCA(n_components=d,svd_solver="full").fit(np.vstack((Xs_all,Xt_new)))
     W0 = pca.components_.T  # 初始化降维矩阵为Dxd维,D＞d
     Ws, Wt = W0, W0
     accs,acc_knowns,acc_unknowns,HOSs=[],[],[],[]
-
+    
     for i in range(epoch):
         ratio=min(i+3,epoch)/epoch
         print('ratio:',ratio)
@@ -567,7 +571,7 @@ def Train(dataset,tg,scs,root,Cs_end,Cu_start,epoch=10,eta=0.002,gamma_tk=0.4,ga
             Xt_align,Yt_align,l_align=Xt_new,Yt_pseudo,l
         print('Xt_align:{} ,Yt_align:{} ,l_align:{} '.format(Xt_align.shape,Yt_align.shape,l_align.shape))
         print(np.unique(Yt_align,return_counts=True))
-        W = cost_manifold(Ws, Wt,l_align, Cs, Xs_all, ys_all, Xt_align, Yt_align, 20, 100).point
+        W = cost_manifold(Ws, Wt,l_align, Cs, Xs_all, ys_all, Xt_align, Yt_align, 15, 100).point
         print(W[0].shape)
         Xs_pre = np.dot(Xs_all, W[0])
         Xt_pre = np.dot(Xt_new, W[1])
@@ -584,6 +588,9 @@ def Train(dataset,tg,scs,root,Cs_end,Cu_start,epoch=10,eta=0.002,gamma_tk=0.4,ga
         Yt_pseudo = predict_Xt.argmax(axis=0)
 
         acc,acc_unknown,acc_known,HOS=compute_acc(Yt_new,Yt_pseudo,Cs)
+        print("--------Label info:--------")
+        print("Yt_new:",Yt_new.tolist())
+        print("Yt_pseudo:",Yt_pseudo.tolist())
         print("\nIteration :{}".format(i+1))
         print('all acc',acc)
         print("pseudo Xtu:", acc_unknown)
@@ -608,23 +615,25 @@ def Train(dataset,tg,scs,root,Cs_end,Cu_start,epoch=10,eta=0.002,gamma_tk=0.4,ga
         print("Iterations:",i,'\tacc:{}\tacc_known:{}\tacc_unknown:{}\tHOS:{}'.format(accs[i],acc_knowns[i],acc_unknowns[i],HOSs[i]))
     interval=time.strftime("%H:%M:%S", time.gmtime(time.time()-start))
     print("Current Train cost time:",interval)
-    return max(accs)
+    last_metrics=(accs[-1],acc_knowns[-1],acc_unknowns[-1],HOSs[-1])
+    return max(accs),last_metrics
 
 
 # scs=['Product.csv','RealWorld.csv','Art.csv']
 # tg='Clipart.csv'
 # root=osp.join('Office-31_Alex','Data_office31')
-## 以下是officeHome
+# # 以下是officeHome
 # root='data/OfficeHome_dk'
 # dataSet='OfficeHomeDK'
 # domain=['Product.csv','RealWorld.csv','Art.csv','Clipart.csv']
-# Cs_end,Cu_start=45,45
+# Cs_end,Cu_start=25,25
 
 ## 以下是office31
 root='data/resnet50Data'
 dataSet='Office31'
 domain=['dslr.csv','amazon.csv','webcam.csv']
 Cs_end,Cu_start=10,20
+# Cs_end,Cu_start=20,20
 
 # para=[i/1000 for i in range(1,10,1)]#eta
 eta_para=[0.001]
@@ -635,18 +644,61 @@ Gamma_tu=[i/100 for i in range(10,40,10)]
 all_start=time.time()
 
 # Train(dataSet,'RealWorld.csv',['Product.csv','Clipart.csv','Art.csv'],root,Cs_end,Cu_start,conf=0.0)
-make_print_to_file(filename='{}_Mlti_2{}_v1_2_newSet'.format(dataSet,'Amazon'),path=osp.join('data',dataSet+'logs'))
-# Train(dataSet,'Clipart.csv',['Art.csv','Product.csv','RealWorld.csv'],root,Cs_end,Cu_start,eta=0.001,gamma_tk=1,gamma_tu=3,gamma_s=1,pro=True)
-# Train(dataSet,'dslr.csv',['amazon.csv','webcam.csv'],root,Cs_end,Cu_start,eta=0.001,gamma_tk=0.1,gamma_tu=0.3,gamma_s=0.3,pro=True)
-# Train(dataSet,'webcam.csv',['amazon.csv','dslr.csv'],root,Cs_end,Cu_start,eta=0.001,gamma_tk=0.1,gamma_tu=0.3,gamma_s=0.3,pro=True)
-# Train(dataSet,'amazon.csv',['dslr.csv','webcam.csv'],root,Cs_end,Cu_start,eta=0.001,gamma_tk=0.1,gamma_tu=0.3,gamma_s=0.3,pro=True)
+make_print_to_file(filename='tkuy_{}_Mlti_2{}_v1_2_set10'.format(dataSet,'amazon'),path=osp.join('data',dataSet+'logs'))
+# Train(dataSet,'Clipart.csv',['Art.csv','Product.csv','RealWorld.csv'],root,Cs_end,Cu_start,eta=0.001,gamma_tk=0.3,gamma_tu=0.3,gamma_s=0.5,conf=-0.5,pro=True,d=300)
+
+# Train(dataSet,'Art.csv',['Clipart.csv','Product.csv','RealWorld.csv'],root,Cs_end,Cu_start,eta=0.001,gamma_tk=0.3,gamma_tu=0.3,gamma_s=0.1,pro=True)
+## 这两个分配给另外两台电脑跑
+# Train(dataSet,'Product.csv',['Art.csv','Clipart.csv','RealWorld.csv'],root,Cs_end,Cu_start,eta=0.0005,gamma_tk=0.1,gamma_tu=0.3,gamma_s=0.5,conf=-0.5,pro=True,d=300)
+# Train(dataSet,'RealWorld.csv',['Art.csv','Product.csv','Clipart.csv'],root,Cs_end,Cu_start,eta=0.0005,gamma_tk=0.1,gamma_tu=0.3,gamma_s=0.5,conf=-0.5,pro=True,d=300)
+# Train(dataSet,'dslr.csv',['amazon.csv','webcam.csv'],root,Cs_end,Cu_start,eta=0.001,gamma_tk=0.2,gamma_tu=0.2,gamma_s=0.4,pro=False)
+# Train(dataSet,'webcam.csv',['amazon.csv','dslr.csv'],root,Cs_end,Cu_start,eta=0.001,gamma_tk=0.2,gamma_tu=0.2,gamma_s=0.4,pro=False)
+Train(dataSet,'amazon.csv',['dslr.csv','webcam.csv'],root,Cs_end,Cu_start,eta=0.001,gamma_tk=0.2,gamma_tu=0.2,gamma_s=0.4,pro=True)
+sys.exit()
+print("found:{}",[i/10 for i in range(1,11)])
+print("Analyse tk")
+tks=[i/10 for i in range(1,11)]
+metrics=[]
+for tk in tks:
+    _,last_metrics=Train(dataSet,'amazon.csv',['dslr.csv','webcam.csv'],root,Cs_end,Cu_start,eta=0.001,gamma_tk=tk,gamma_tu=0.2,gamma_s=0.4,pro=True,d=100)
+    metrics.append(last_metrics)
+print("{} to {} tk found Finish:".format(dataSet,'amazon.csv'))
+print("Tks List:",tks)
+for i in range(len(tks)):
+    print(tks[i],metrics[i])
+
+
+print("Analyse tu")
+tus=[i/10 for i in range(1,11)]
+metrics=[]
+for tu in tus:
+    _,last_metrics=Train(dataSet,'amazon.csv',['dslr.csv','webcam.csv'],root,Cs_end,Cu_start,eta=0.001,gamma_tk=0.2,gamma_tu=tu,gamma_s=0.4,pro=True,d=100)
+    metrics.append(last_metrics)
+print("{} to {} tu found Finish:".format(dataSet,'amazon.csv'))
+print("Tks List:",tus)
+for i in range(len(tus)):
+    print(tus[i],metrics[i])
+
+
+print("Analyse ys")
+yss=[i/10 for i in range(1,11)]
+metrics=[]
+for ys in yss:
+    _,last_metrics=Train(dataSet,'amazon.csv',['dslr.csv','webcam.csv'],root,Cs_end,Cu_start,eta=0.001,gamma_tk=0.2,gamma_tu=0.2,gamma_s=ys,pro=True,d=100)
+    metrics.append(last_metrics)
+print("{} to {} yss found Finish:".format(dataSet,'amazon.csv'))
+print("yss List:",yss)
+for i in range(len(yss)):
+    print(yss[i],metrics[i])
+
+
 
 interval=time.strftime("%H:%M:%S", time.gmtime(time.time()-all_start))
 print("All Set cost time:",interval)
 
 # initLoggingConfig(level="detail",logFileName='{}_Mlti_2{}_v1_2'.format(dataSet,'every'),logPath="logs")
 # input()
-# sys.exit()
+sys.exit()
 for tg in domain:
     if tg!='amazon.csv':
         continue
